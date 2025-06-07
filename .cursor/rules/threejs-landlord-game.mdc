@@ -1,0 +1,330 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Three.js 斗地主网络游戏开发规则
+
+## 项目结构规范
+
+### 核心目录结构
+```
+project/
+├── src/
+│   ├── client/              # 客户端代码
+│   │   ├── game/           # 游戏核心逻辑
+│   │   │   ├── scenes/     # Three.js场景管理
+│   │   │   ├── entities/   # 游戏实体（牌桌、牌、玩家等）
+│   │   │   ├── ui/         # UI组件
+│   │   │   ├── animations/ # 动画效果
+│   │   │   ├── audio/      # 音效管理
+│   │   │   └── networking/ # 网络通信
+│   │   ├── assets/         # 资源文件
+│   │   │   ├── models/     # 3D模型
+│   │   │   ├── textures/   # 纹理贴图
+│   │   │   ├── sounds/     # 音效文件
+│   │   │   └── images/     # 图片资源
+│   │   └── utils/          # 工具函数
+│   ├── server/             # 服务器端代码
+│   │   ├── game/           # 游戏逻辑
+│   │   ├── networking/     # 网络处理
+│   │   └── database/       # 数据库操作
+│   └── shared/             # 共享代码
+│       ├── constants/      # 常量定义
+│       ├── types/          # 类型定义
+│       └── utils/          # 共享工具
+├── public/                 # 静态资源
+├── docs/                   # 项目文档
+└── tests/                  # 测试文件
+```
+
+## 技术栈规范
+
+### 前端技术栈
+- **3D引擎**: Three.js (最新稳定版)
+- **网络通信**: Socket.IO
+- **状态管理**: 自定义状态管理器
+- **UI框架**: 原生HTML/CSS + Three.js UI
+- **动画库**: Tween.js
+- **音频**: Web Audio API
+- **模块化**: ES6 Modules
+
+### 后端技术栈
+- **运行环境**: Node.js
+- **框架**: Express.js
+- **实时通信**: Socket.IO
+- **数据库**: MongoDB (用户数据) + Redis (游戏状态)
+- **认证**: JWT
+
+## 游戏功能规范
+
+### 核心功能模块
+1. **用户系统**
+   - 用户注册/登录
+   - 用户资料管理
+   - 积分/等级系统
+
+2. **游戏大厅**
+   - 房间列表
+   - 创建/加入房间
+   - 玩家匹配
+
+3. **游戏核心**
+   - 斗地主完整规则实现
+   - 实时多人对战
+   - 牌局回放
+   - 断线重连
+
+4. **3D视觉效果**
+   - 3D牌桌场景
+   - 卡牌3D模型和动效
+   - 粒子效果
+   - 光影效果
+
+### UI/UX设计原则
+- **3D场景设计**: 营造真实牌桌氛围
+- **交互反馈**: 清晰的视觉和音效反馈
+- **响应式设计**: 适配不同屏幕尺寸
+- **无障碍设计**: 支持键盘操作和屏幕阅读器
+
+## 代码组织规范
+
+### 文件命名规范
+- 类文件: PascalCase (如 `GameScene.js`)
+- 工具函数: camelCase (如 `cardUtils.js`)
+- 常量文件: UPPER_SNAKE_CASE (如 `GAME_CONSTANTS.js`)
+- 组件文件: PascalCase (如 `CardEntity.js`)
+
+### 代码结构规范
+```javascript
+// 1. 导入外部库
+import * as THREE from 'three';
+import { io } from 'socket.io-client';
+
+// 2. 导入内部模块
+import { GameState } from './GameState.js';
+import { CardEntity } from './entities/CardEntity.js';
+
+// 3. 导入常量和类型
+import { GAME_CONSTANTS } from '../shared/constants/gameConstants.js';
+
+// 4. 类定义
+export class GameScene {
+    constructor() {
+        this.init();
+    }
+    
+    init() {
+        // 初始化逻辑
+    }
+}
+```
+
+### Three.js 开发规范
+
+#### 场景管理
+```javascript
+class SceneManager {
+    constructor() {
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.setupLighting();
+        this.setupEnvironment();
+    }
+    
+    setupLighting() {
+        // 环境光 + 定向光的组合
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        this.scene.add(ambientLight, directionalLight);
+    }
+}
+```
+
+#### 实体组件系统
+```javascript
+class CardEntity extends THREE.Group {
+    constructor(cardData) {
+        super();
+        this.cardData = cardData;
+        this.createMesh();
+        this.setupAnimations();
+    }
+    
+    createMesh() {
+        // 创建卡牌3D模型
+    }
+    
+    setupAnimations() {
+        // 设置动画
+    }
+}
+```
+
+## 网络游戏开发规范
+
+### 客户端-服务器通信
+```javascript
+// 客户端事件发送
+socket.emit('play-card', { cardId, playerId });
+
+// 服务器事件处理
+socket.on('card-played', (data) => {
+    this.gameState.playCard(data);
+    this.animateCardPlay(data);
+});
+```
+
+### 状态同步策略
+- **权威服务器**: 所有游戏逻辑在服务器执行
+- **客户端预测**: 减少延迟感知
+- **状态校验**: 定期同步完整状态
+- **断线重连**: 保存游戏状态，支持重新连接
+
+## 斗地主游戏逻辑规范
+
+### 牌型定义
+```javascript
+const CARD_TYPES = {
+    SINGLE: 'single',           // 单牌
+    PAIR: 'pair',              // 对子
+    TRIPLE: 'triple',          // 三张
+    TRIPLE_WITH_ONE: 'triple_with_one',  // 三带一
+    TRIPLE_WITH_PAIR: 'triple_with_pair', // 三带二
+    STRAIGHT: 'straight',       // 顺子
+    PAIR_STRAIGHT: 'pair_straight', // 连对
+    PLANE: 'plane',            // 飞机
+    BOMB: 'bomb',              // 炸弹
+    ROCKET: 'rocket'           // 火箭
+};
+```
+
+### 游戏流程管理
+```javascript
+class GameFlow {
+    constructor() {
+        this.phase = 'WAITING';  // WAITING -> BIDDING -> PLAYING -> FINISHED
+        this.currentPlayer = null;
+        this.landlord = null;
+    }
+    
+    nextPhase() {
+        // 阶段转换逻辑
+    }
+}
+```
+
+## 性能优化规范
+
+### 渲染优化
+- **LOD系统**: 根据距离调整模型细节
+- **批量绘制**: 合并相似物体的绘制调用
+- **纹理优化**: 使用纹理图集和压缩格式
+- **几何体复用**: 共享几何体和材质
+
+### 内存管理
+- **资源释放**: 及时释放不用的几何体和纹理
+- **对象池**: 复用频繁创建销毁的对象
+- **懒加载**: 按需加载资源
+
+### 网络优化
+- **数据压缩**: 最小化传输数据量
+- **差量更新**: 只传输变化的数据
+- **预测同步**: 客户端预测减少延迟
+
+## 测试规范
+
+### 单元测试
+- 游戏逻辑函数测试
+- 牌型识别算法测试
+- 网络通信模块测试
+
+### 集成测试
+- 完整游戏流程测试
+- 多人对战场景测试
+- 断线重连测试
+
+### 性能测试
+- 渲染性能基准测试
+- 内存使用情况监控
+- 网络延迟测试
+
+## 部署规范
+
+### 构建配置
+```javascript
+// webpack配置示例
+module.exports = {
+    entry: './src/client/main.js',
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'game.bundle.js'
+    },
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all'
+                }
+            }
+        }
+    }
+};
+```
+
+### 环境配置
+- **开发环境**: 启用调试工具和热重载
+- **测试环境**: 模拟生产环境进行测试
+- **生产环境**: 代码压缩和性能优化
+
+## 文档规范
+
+### 代码注释
+```javascript
+/**
+ * 处理玩家出牌动作
+ * @param {Object} playData - 出牌数据
+ * @param {string} playData.playerId - 玩家ID
+ * @param {Array} playData.cards - 出的牌
+ * @param {string} playData.cardType - 牌型
+ * @returns {boolean} 是否出牌成功
+ */
+function handlePlayCard(playData) {
+    // 实现逻辑
+}
+```
+
+### API文档
+- 详细的服务器API接口文档
+- Socket.IO事件文档
+- 游戏规则文档
+
+## 安全规范
+
+### 客户端安全
+- 输入验证和过滤
+- 防止作弊检测
+- 敏感信息保护
+
+### 服务器安全
+- 权限验证
+- 速率限制
+- SQL注入防护
+- XSS防护
+
+---
+
+## 开发工作流
+
+1. **项目初始化**: 创建项目结构，配置开发环境
+2. **原型开发**: 实现基础3D场景和简单交互
+3. **核心功能**: 开发游戏逻辑和网络通信
+4. **视觉效果**: 优化3D效果和动画
+5. **测试优化**: 性能测试和bug修复
+6. **部署上线**: 生产环境部署
+
+遵循这些规则将确保three.js斗地主网络游戏项目的高质量开发。
